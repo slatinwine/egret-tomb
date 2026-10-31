@@ -7373,7 +7373,7 @@ function act(_x2) {
 }
 function _act() {
   _act = _asyncToGenerator(_regenerator().m(function _callee3(input) {
-    var wasTM, msgs, raw, gm, prevDay, _t3;
+    var wasTM, msgs, raw, gm, prevDay, prevTime, _t3;
     return _regenerator().w(function (_context3) {
       while (1) switch (_context3.p = _context3.n) {
         case 0:
@@ -7413,7 +7413,19 @@ function _act() {
           raw = _context3.v;
           gm = parseGM(raw);
           prevDay = G.day;
+          prevTime = G.time;
           if (gm.state) G = Object.assign({}, G, gm.state);
+          /* 客户端时间引擎：每 3 回合若主理人没推进时段，客户端兜底推进 */
+          if ((G.turn || 0) % 3 === 0 && G.turn > 0 && G.time === prevTime && G.day === prevDay) {
+            var SLOTS = ["清晨", "正午", "黄昏", "深夜"];
+            var sIdx = SLOTS.indexOf(G.time);
+            if (sIdx >= 0) {
+              sIdx++;
+              if (sIdx >= SLOTS.length) { sIdx = 0; G.day = (G.day || 1) + 1; }
+              G.time = SLOTS[sIdx];
+              toast("时间流逝……（第" + G.day + "天 · " + G.time + "）");
+            }
+          }
           applyExtras(gm, wasTM);
           if (gm.narration) {
             gmHistory.push({

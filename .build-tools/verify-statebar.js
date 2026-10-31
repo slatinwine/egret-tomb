@@ -9,6 +9,10 @@ const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 // 模型返回：第3天·黄昏，hp 80→52，sanity 70→41（含时段别名「傍晚」测试归一）
 const MODEL_RAW =
   '好的，这是本回合的推进。\n```json\n{"narration":"石门在你身后轰然合拢。尘埃落定，火把的光变暗了。","state":{"day":3,"time":"傍晚","location":"藏兵室","hp":52,"sanity":41,"inventory":["火把","青铜古镜"]},"options":["搜查藏兵室","休息片刻"]}]\n```'.replace("}]", "}");
+// 模型返回 B：主理人偷懒（day/time 原样回显，只有 hp 变化）→ 应触发客户端时间引擎
+const MODEL_STUCK =
+  '{"narration":"你靠着石壁歇了一会儿。","state":{"day":3,"time":"黄昏","location":"藏兵室","hp":50,"sanity":41,"inventory":["火把","青铜古镜"]},"options":["继续休息","起身探索"]}';
+let mockMode = "advance";
 
 const dom = new JSDOM(html, {
   runScripts: "dangerously",
@@ -23,8 +27,8 @@ const dom = new JSDOM(html, {
         return Promise.resolve({
           ok: true, status: 200,
           headers: { forEach: function () {} },
-          json: async function () { return { choices: [{ message: { content: MODEL_RAW } }] }; },
-          text: async function () { return JSON.stringify({ choices: [{ message: { content: MODEL_RAW } }] }); }
+          json: async function () { return { choices: [{ message: { content: mockMode === "advance" ? MODEL_RAW : MODEL_STUCK } }] }; },
+          text: async function () { return JSON.stringify({ choices: [{ message: { content: mockMode === "advance" ? MODEL_RAW : MODEL_STUCK } }] }); }
         });
       }
       return Promise.resolve({ ok: false, status: 0, headers: { forEach: function () {} }, text: async function () { return ""; } });
@@ -78,6 +82,18 @@ function settle(ms) { return new Promise((r) => setTimeout(r, ms || 50)); }
   t("顶部地点已更新（" + locTxt + "）", locTxt === "藏兵室");
   t("体力条宽度=52%（实际 " + hpW + "）", hpW === "52%");
   t("精神条宽度=41%（实际 " + saW + "）", saW === "41%");
+
+  // 场景二：模型偷懒（day/time 原样回显）→ turn=3 时客户端时间引擎应兜底推进 黄昏→深夜
+  mockMode = "stuck";
+  window.G.turn = 2;
+  await window.act("原地休息片刻");
+  await settle(1500);
+
+  t("偷懒回合：hp 仍合并（50）", window.G.hp === 50);
+  t("偷懒回合：turn=3", window.G.turn === 3);
+  t("客户端引擎兜底推进 黄昏→深夜", window.G.time === "深夜");
+  const dayTxt2 = document.getElementById("s-day").textContent;
+  t("顶部日期文字显示（" + dayTxt2 + "）", dayTxt2.indexOf("深夜") >= 0);
 
   console.log("---");
   console.log(pass + " passed, " + fail + " failed");
