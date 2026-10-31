@@ -7451,6 +7451,13 @@ function _act() {
           _t3 = _context3.v;
           gmHistory.pop();
           logScene("【与世界失去联系】" + _t3.message + "——再试一次。", true);
+          if (window.USE_CLOUD_BRIDGE) {
+            var _mw = document.createElement("div");
+            _mw.className = "scene sys";
+            _mw.innerHTML = '【镜像通道受限】当前浏览器（尤其微信/APP 内置窗口）可能不支持沙箱桥。<a href="https://drifting-classroom.app.workbuddy.host/?sharecode=MYVEVIDCBE" style="color:inherit;text-decoration:underline">点此到主站继续冒险</a>（存档在主站），或复制本页链接用系统浏览器打开。';
+            $("log").appendChild(_mw);
+            scrollEnd();
+          }
         case 6:
           busy = false;
           $("act-send").disabled = false;
