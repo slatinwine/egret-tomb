@@ -6790,7 +6790,11 @@ function bridgeFetch(url, init) {
       var to = setTimeout(function () { if (__bridgePending[id]) { delete __bridgePending[id]; reject(new TypeError("bridge timeout")); } }, 120000);
       __bridgePending[id] = function (d) {
         clearTimeout(to);
-        if (d.err) { reject(new TypeError(d.err)); return; }
+        if (d.err) {
+          /* 带上目标路径与原因，方便定位是哪个云端请求失败 */
+          reject(new TypeError("[桥] " + url.replace(/^https?:\/\/[^/]+/, "") + " → " + d.err));
+          return;
+        }
         try { resolve(new Response(d.body, { status: d.status, statusText: d.statusText || "", headers: d.headers })); }
         catch (e2) { reject(e2); }
       };
