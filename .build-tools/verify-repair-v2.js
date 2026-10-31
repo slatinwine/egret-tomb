@@ -32,7 +32,7 @@ global.localStorage = {
 global.fetch = async () => ({ ok: false, status: 0, text: async () => "" });
 global.confirm = () => false;
 
-const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+const html = fs.readFileSync(path.join(__dirname, "..", "game.html"), "utf8");
 const blocks = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 const main = blocks.find(b => b.includes("LS_AI"));
 const patchV2 = blocks.find(b => b.includes("JSON 修复 v5") || b.includes("tryRepair"));

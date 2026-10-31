@@ -5,7 +5,7 @@ AI 主理人驱动的对话式文字冒险。灵感致敬楳图一雄《漂流�
 ## 访问入口
 
 - **主站（WorkBuddy 托管，推荐）**：https://drifting-classroom.app.workbuddy.host/?sharecode=MYVEVIDCBE
-- **镜像（GitHub Pages）**：https://slatinwine.github.io/egret-tomb/ （经沙箱数据桥转发云端 AI 请求，体验与主站一致）
+- **镜像（GitHub Pages）**：https://slatinwine.github.io/egret-tomb/ （全屏壳内嵌主站——游戏直接在主站域名里同源运行，无跨源请求，任何浏览器可用；本仓库 `game.html` 为完整游戏源码）
 
 ## 玩法
 

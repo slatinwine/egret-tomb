@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require("jsdom");
 
-const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+const html = fs.readFileSync(path.join(__dirname, "..", "game.html"), "utf8");
 
 // 模型返回：第3天·黄昏，hp 80→52，sanity 70→41（含时段别名「傍晚」测试归一）
 const MODEL_RAW =
