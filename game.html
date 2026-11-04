@@ -7989,8 +7989,18 @@ $("end-skip").onclick = finishRun;
     jidian:  { src: "jidian.jpg",  cap: "祭殿 · 长明灯" },
     xunzang: { src: "xunzang.jpg", cap: "殉葬坑 · 地底骸骨" },
     muwai:   { src: "muwai.jpg",   cap: "墓外 · 封土夜色" },
-    mudao:   { src: "mudao.jpg",   cap: "墓道 · 深入地底" }
+    mudao:   { src: "mudao.jpg",   cap: "墓道 · 深入地底" },
+    baixiang:{ src: "baixiang.jpg", cap: "白箱 · 沉默的审判者" },
+    jiqiren: { src: "jiqiren.jpg", cap: "机械体 · 荒原游荡者" },
+    gujing:  { src: "gujing.jpg",  cap: "照影古镜 · 时光之门" }
   };
+  /* 物件类插画：叙事首次提到时插入，每次冒险每种最多一次 */
+  var ITEM_TESTS = [
+    ["baixiang", /白箱|白色巨箱|白色立方|白色箱体/],
+    ["jiqiren", /机器人|机械体|机械造物|机械傀儡|人形机械/],
+    ["gujing", /古镜|铜镜|照影|青铜镜/]
+  ];
+  var shownItems = {};
   function keyFor(loc){
     var s = String(loc || "");
     if (/祭殿|主殿|神殿|长明灯/.test(s)) return "jidian";
@@ -8031,10 +8041,28 @@ $("end-skip").onclick = finishRun;
       }
     } catch (e) {}
   }
+  function artForNarration(text){
+    try {
+      var s = String(text || "");
+      if (!s) return;
+      for (var i = 0; i < ITEM_TESTS.length; i++) {
+        var key = ITEM_TESTS[i][0];
+        if (shownItems[key]) continue;
+        if (ITEM_TESTS[i][1].test(s)) {
+          shownItems[key] = true;
+          insertArt(key);
+          break; /* 每次叙事最多插一张物件图 */
+        }
+      }
+    } catch (e) {}
+  }
   var origLog = window.logScene;
   if (typeof origLog === "function") {
     window.logScene = function(text, isSys, done){
-      if (!isSys) artForCurrent(false);
+      if (!isSys) {
+        artForCurrent(false);
+        artForNarration(text);
+      }
       return origLog(text, isSys, done);
     };
   }
