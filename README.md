@@ -7,6 +7,10 @@ AI 主理人驱动的对话式文字冒险。灵感致敬楳图一雄《漂流�
 - **主站（WorkBuddy 托管，推荐）**：https://drifting-classroom.app.workbuddy.host/?sharecode=MYVEVIDCBE
 - **镜像（GitHub Pages）**：https://slatinwine.github.io/egret-tomb/ （全屏壳内嵌主站——游戏直接在主站域名里同源运行，无跨源请求，任何浏览器可用；本仓库 `game.html` 为完整游戏源码）
 
+## 场景插画
+
+四个关键地点（祭殿 / 墓道 / 墓外 / 殉葬坑）配有盗墓笔记风格插画（`art/*.jpg`，1280px）。玩家推进到对应地点时，日志会自动插入带标题的插画卡（同一地点不重复插）；图片按需加载并自动携带 sharecode 通过托管门禁，加载失败静默隐藏不影响游戏。
+
 ## 玩法
 
 - **对话即冒险**：把想做的事直接告诉 AI 主理人（自由输入），或点它给的行动建议

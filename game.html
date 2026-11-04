@@ -7975,5 +7975,106 @@ $("end-skip").onclick = finishRun;
   } catch (e3) {}
 })();
 </script>
+
+<script>
+/* 场景插画：进入关键地点自动插图（盗墓笔记风，art/ 目录按需加载，带 sharecode 过门禁） */
+(function(){
+  var SC = (function(){
+    try {
+      var m = String(location.search).match(/sharecode=([^&]+)/);
+      return m ? decodeURIComponent(m[1]) : "";
+    } catch (e) { return ""; }
+  })();
+  var ARTS = {
+    jidian:  { src: "jidian.jpg",  cap: "祭殿 · 长明灯" },
+    xunzang: { src: "xunzang.jpg", cap: "殉葬坑 · 地底骸骨" },
+    muwai:   { src: "muwai.jpg",   cap: "墓外 · 封土夜色" },
+    mudao:   { src: "mudao.jpg",   cap: "墓道 · 深入地底" }
+  };
+  function keyFor(loc){
+    var s = String(loc || "");
+    if (/祭殿|主殿|神殿|长明灯/.test(s)) return "jidian";
+    if (/殉葬坑|骸骨坑|白骨坑/.test(s)) return "xunzang";
+    if (/墓外|封土|地表|荒野|苇/.test(s)) return "muwai";
+    if (/墓道|前厅|甬道|耳室|藏兵室|盗洞|墓室|地宫|墓门/.test(s)) return "mudao";
+    return null;
+  }
+  var lastKey = null;
+  function logHasArt(){
+    var log = document.getElementById("log");
+    return !!(log && log.querySelector && log.querySelector(".art-fig"));
+  }
+  function insertArt(key){
+    var log = document.getElementById("log");
+    if (!log) return;
+    var a = ARTS[key];
+    var fig = document.createElement("figure");
+    fig.className = "art-fig";
+    var img = document.createElement("img");
+    img.alt = a.cap;
+    img.src = "art/" + a.src + (SC ? "?sharecode=" + encodeURIComponent(SC) : "");
+    img.onload = function(){ img.className = "on"; };
+    img.onerror = function(){ if (fig.parentNode) fig.parentNode.removeChild(fig); };
+    var cap = document.createElement("figcaption");
+    cap.textContent = a.cap;
+    fig.appendChild(img);
+    fig.appendChild(cap);
+    log.appendChild(fig);
+  }
+  function artForCurrent(force){
+    try {
+      if (!window.G || !window.G.location) return;
+      var k = keyFor(window.G.location);
+      if (k && (k !== lastKey || (force && !logHasArt()))) {
+        lastKey = k;
+        insertArt(k);
+      }
+    } catch (e) {}
+  }
+  var origLog = window.logScene;
+  if (typeof origLog === "function") {
+    window.logScene = function(text, isSys, done){
+      if (!isSys) artForCurrent(false);
+      return origLog(text, isSys, done);
+    };
+  }
+  var origRender = window.renderState;
+  if (typeof origRender === "function") {
+    window.renderState = function(){
+      artForCurrent(true);
+      return origRender();
+    };
+  }
+})();
+</script>
+
+<style>
+  .art-fig {
+    margin: 12px 0 6px;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 6px 22px rgba(0,0,0,.55);
+  }
+  .art-fig img {
+    width: 100%;
+    display: block;
+    opacity: 0;
+    transition: opacity .9s ease;
+  }
+  .art-fig img.on { opacity: .94; }
+  .art-fig figcaption {
+    position: absolute;
+    left: 10px;
+    bottom: 8px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,.85);
+    background: rgba(0,0,0,.45);
+    padding: 3px 10px;
+    border-radius: 6px;
+  }
+</style>
 </body>
 </html>
