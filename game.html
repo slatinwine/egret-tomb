@@ -8104,5 +8104,83 @@ $("end-skip").onclick = finishRun;
     border-radius: 6px;
   }
 </style>
+<script>
+/* 首页访客计数：IP 回显（国内源优先）→ 双哈希去标识 → 云数据库去重入库 → rpc 计数 */
+(function(){
+  var PROV = [
+    { url: "https://myip.ipip.net/json", pick: function(j){ return j && j.data && j.data.ip; } },
+    { url: "https://api.ip.sb/jsonip", pick: function(j){ return j && j.ip; } }
+  ];
+  function withTimeout(p, ms){
+    return Promise.race([ Promise.resolve(p), new Promise(function(_, rej){ setTimeout(function(){ rej(new Error("timeout")); }, ms); }) ]);
+  }
+  function fetchJson(url){
+    return withTimeout(fetch(url).then(function(r){
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }), 6000);
+  }
+  function getIP(){
+    var i = 0;
+    function next(){
+      if (i >= PROV.length) return Promise.reject(new Error("no provider"));
+      var pr = PROV[i++];
+      return fetchJson(pr.url).then(pr.pick).then(function(ip){
+        if (!ip) throw new Error("empty ip");
+        return ip;
+      }).catch(next);
+    }
+    return next();
+  }
+  /* djb2 + fnv1a 双哈希，避免存原始 IP */
+  function hashIP(s){
+    var a = 5381, b = 2166136261 >>> 0, i, c;
+    for (i = 0; i < s.length; i++) {
+      c = s.charCodeAt(i);
+      a = ((a << 5) + a + c) >>> 0;
+      b = ((b ^ c) >>> 0); b = (b + ((b << 1) >>> 0) + ((b << 4) >>> 0) + ((b << 7) >>> 0) + ((b << 8) >>> 0) + ((b << 24) >>> 0)) >>> 0;
+    }
+    return "wbv1_" + a.toString(16) + "_" + b.toString(16) + "_" + s.length;
+  }
+  function getDb(){
+    if (typeof initCloud !== "function") return null;
+    var c = initCloud();
+    return (c && c.database) ? c.database : null;
+  }
+  function render(n){
+    var ts = document.getElementById("title-screen");
+    if (!ts || !(n >= 0)) return;
+    var p = document.getElementById("visitor-count");
+    if (!p) { p = document.createElement("p"); p.id = "visitor-count"; p.className = "hint"; ts.appendChild(p); }
+    p.textContent = "🕯️ 已有 " + n + " 位探险者踏入白鹭冢（按 IP 去重）";
+  }
+  function run(){
+    var db = getDb();
+    if (!db || typeof fetch !== "function") return;
+    getIP().then(function(ip){
+      var h = hashIP(ip);
+      var ins;
+      try { ins = db.from("wb_visitors").insert({ ip_hash: h }); } catch (e1) { ins = null; }
+      return Promise.resolve(ins).then(function(res){
+        var err = res && res.error;
+        var code = err && (err.code || err.message || "");
+        if (err && String(code).indexOf("23505") < 0) throw err;
+        return true;
+      });
+    }).catch(function(){ /* IP 获取或入库失败：不计本次，但仍尝试展示当前计数 */ }).then(function(){
+      var rpc;
+      try { rpc = db.rpc("wb_visitor_count"); } catch (e2) { return; }
+      return Promise.resolve(rpc).then(function(res){
+        var d = res && (typeof res.data === "number" ? res.data : (res.data && res.data[0]));
+        var n = parseInt(d, 10);
+        if (n >= 0) render(n);
+      });
+    }).catch(function(){ /* 计数失败：不显示，不影响游戏 */ });
+  }
+  if (document.getElementById("title-screen")) {
+    setTimeout(run, 1500);
+  }
+})();
+</script>
 </body>
 </html>
